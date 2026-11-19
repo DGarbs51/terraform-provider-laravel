@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+# Prepares an Amp orb for this repository: Go, Terraform, golangci-lint, and
+# the Laravel Cloud CLI, plus a warm Go build cache. Runs on fresh and on
+# stale-snapshot orbs, so every step checks before it installs.
+set -euo pipefail
+
+# Keep in step with go.mod and .github/workflows/ci.yml.
+GO_VERSION=1.26.11
+TERRAFORM_VERSION=1.17.2
+GOLANGCI_LINT_VERSION=2.11.3
+CLOUD_CLI_VERSION=0.7.8
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+arch="$(dpkg --print-architecture)" # amd64 or arm64
+bin=/usr/local/bin
+
+step() {
+  local name="$1"
+  shift
+  local start=$SECONDS
+  echo "==> $name"
+  "$@"
+  echo "<== $name ($((SECONDS - start))s)"
+}
+
+fetch() { curl -fsSL --retry 3 "$@"; }
+
+install_apt_packages() {
+  local missing=()
+  for pkg in php8.4-cli php8.4-curl php8.4-mbstring php8.4-xml php8.4-zip; do
+    dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q 'ok installed' || missing+=("$pkg")
+  done
+  if [ ${#missing[@]} -eq 0 ]; then
+    echo "apt packages already installed"
+    return
+  fi
+  sudo apt-get update -qq
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends "${missing[@]}"
+}
+
+install_go() {
+  if [ "$(/usr/local/go/bin/go env GOVERSION 2>/dev/null || true)" = "go$GO_VERSION" ]; then
+    echo "go $GO_VERSION already installed"
+  else
+    local tmp
+    tmp="$(mktemp -d)"
+    fetch "https://go.dev/dl/go$GO_VERSION.linux-$arch.tar.gz" -o "$tmp/go.tgz"
+    sudo rm -rf /usr/local/go
+    sudo tar -C /usr/local -xzf "$tmp/go.tgz"
+    rm -rf "$tmp"
+  fi
+  sudo ln -sf /usr/local/go/bin/go "$bin/go"
+  sudo ln -sf /usr/local/go/bin/gofmt "$bin/gofmt"
+}
+
+install_terraform() {
+  if "$bin/terraform" version 2>/dev/null | head -1 | grep -qx "Terraform v$TERRAFORM_VERSION"; then
+    echo "terraform $TERRAFORM_VERSION already installed"
+    return
+  fi
+  local tmp
+  tmp="$(mktemp -d)"
+  fetch "https://releases.hashicorp.com/terraform/$TERRAFORM_VERSION/terraform_${TERRAFORM_VERSION}_linux_$arch.zip" -o "$tmp/tf.zip"
+  unzip -q -o "$tmp/tf.zip" terraform -d "$tmp"
+  sudo install -m 0755 "$tmp/terraform" "$bin/terraform"
+  rm -rf "$tmp"
+}
+
+install_golangci_lint() {
+  if "$bin/golangci-lint" version 2>/dev/null | grep -q "version $GOLANGCI_LINT_VERSION "; then
+    echo "golangci-lint $GOLANGCI_LINT_VERSION already installed"
+    return
+  fi
+  local tmp name
+  tmp="$(mktemp -d)"
+  name="golangci-lint-$GOLANGCI_LINT_VERSION-linux-$arch"
+  fetch "https://github.com/golangci/golangci-lint/releases/download/v$GOLANGCI_LINT_VERSION/$name.tar.gz" -o "$tmp/lint.tgz"
+  tar -C "$tmp" -xzf "$tmp/lint.tgz"
+  sudo install -m 0755 "$tmp/$name/golangci-lint" "$bin/golangci-lint"
+  rm -rf "$tmp"
+}
+
+# The Laravel Cloud CLI ships as a PHAR named `cloud`. It reads
+# LARAVEL_CLOUD_TOKEN from the environment; .agents/resume saves it for the
+# provider too.
+install_cloud_cli() {
+  if [ "$(cat "$bin/.cloud-cli-version" 2>/dev/null || true)" = "$CLOUD_CLI_VERSION" ] && [ -x "$bin/cloud" ]; then
+    echo "cloud CLI $CLOUD_CLI_VERSION already installed"
+    return
+  fi
+  local tmp
+  tmp="$(mktemp -d)"
+  fetch "https://github.com/laravel/cloud-cli/releases/download/v$CLOUD_CLI_VERSION/cloud" -o "$tmp/cloud"
+  sudo install -m 0755 "$tmp/cloud" "$bin/cloud"
+  echo "$CLOUD_CLI_VERSION" | sudo tee "$bin/.cloud-cli-version" >/dev/null
+  rm -rf "$tmp"
+}
+
+# Dependencies are vendored, so this only compiles. Vet builds the test
+# packages as well, so later `make test` and `make testplan` start warm.
+warm_go_build_cache() {
+  "$bin/go" build ./...
+  "$bin/go" vet ./...
+}
+
+write_agent_notes() {
+  local notes="$HOME/.config/amp/AGENTS.md"
+  local marker="# terraform-provider-laravel orb notes"
+  mkdir -p "$(dirname "$notes")"
+  grep -Fqx "$marker" "$notes" 2>/dev/null && return
+  cat >>"$notes" <<'EOF'
+
+# terraform-provider-laravel orb notes
+
+- Go, gofmt, terraform, golangci-lint, and the Laravel Cloud CLI (`cloud`) are installed in /usr/local/bin by .agents/setup.
+- `make test`, `make vet`, `make lint`, `make testplan`, and `make generate` work offline; dependencies are vendored.
+- The owner's personal secret LARAVEL_CLOUD_TOKEN authenticates the `cloud` CLI directly. .agents/resume also saves it to ~/.config/cloud/config.json, which the provider falls back to, so `make testacc` and local `terraform plan` work without LARAVEL_CLOUD_API_TOKEN. Acceptance tests still skip unless LARAVEL_CLOUD_API_TOKEN is set: run them as `LARAVEL_CLOUD_API_TOKEN="$LARAVEL_CLOUD_TOKEN" make testacc`. They create real, billable resources.
+EOF
+}
+
+step "apt packages" install_apt_packages
+step "go $GO_VERSION" install_go
+step "terraform $TERRAFORM_VERSION" install_terraform
+step "golangci-lint $GOLANGCI_LINT_VERSION" install_golangci_lint
+step "cloud CLI $CLOUD_CLI_VERSION" install_cloud_cli
+step "warm go build cache" warm_go_build_cache
+step "agent notes" write_agent_notes

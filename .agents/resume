@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Runs each time the orb starts or wakes. Saves the LARAVEL_CLOUD_TOKEN secret
+# to the Laravel Cloud CLI config, which the provider falls back to when
+# LARAVEL_CLOUD_API_TOKEN is unset (internal/provider/cli_config.go). The CLI
+# itself reads LARAVEL_CLOUD_TOKEN from the environment.
+set -euo pipefail
+
+if [ -z "${LARAVEL_CLOUD_TOKEN:-}" ]; then
+  echo "LARAVEL_CLOUD_TOKEN is not set; skipping Laravel Cloud login"
+  exit 0
+fi
+
+config="$HOME/.config/cloud/config.json"
+
+# Keep exactly one token, the current secret: with several, the provider
+# refuses to guess which organization to manage.
+if [ -f "$config" ] && jq -e '.api_tokens == [env.LARAVEL_CLOUD_TOKEN]' "$config" >/dev/null 2>&1; then
+  exit 0
+fi
+
+mkdir -p "$(dirname "$config")"
+tmp="$(mktemp "$config.XXXXXX")"
+chmod 600 "$tmp"
+{ cat "$config" 2>/dev/null || echo '{}'; } | jq '.api_tokens = [env.LARAVEL_CLOUD_TOKEN]' >"$tmp"
+mv "$tmp" "$config"
+echo "Saved LARAVEL_CLOUD_TOKEN to $config"
