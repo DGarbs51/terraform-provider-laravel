@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-// TestEnvironmentLostRepositoryPlan pins SE-622. Laravel Cloud leaves an
+// TestEnvironmentLostRepositoryPlan: Laravel Cloud leaves an
 // application created while the last other application on its repository is
 // deleted with no repository, and then refuses every environment on it with a
 // 422 "The selected branch is no longer available." Waiting never helps; the

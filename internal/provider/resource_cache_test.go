@@ -36,7 +36,7 @@ func TestAccCacheResource_basic(t *testing.T) {
 	})
 }
 
-// TestAccCacheResource_elasticacheIsPublic covers SE-585: is_public was
+// TestAccCacheResource_elasticacheIsPublic: is_public was
 // required, but the API always stores false for ElastiCache and refuses to
 // change it, so true drifted on every plan and then failed to apply. It only
 // plans, so no ElastiCache cache is created: true is refused at plan time,
@@ -86,7 +86,7 @@ resource "laravel_cloud_cache" "test" {
 `, name)
 }
 
-// TestAccCacheResource_hibernation covers SE-610: a Valkey Flex cache created
+// TestAccCacheResource_hibernation: a Valkey Flex cache created
 // through the API never scales to zero unless uses_hibernation is sent, which
 // the provider could not do. Scale to zero is set on create, its timeout
 // changed and then turned off in place, and eviction_policy, which the API

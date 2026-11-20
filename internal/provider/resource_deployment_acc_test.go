@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-// SE-598: while one of an environment's resources is provisioning, the API
+// While one of an environment's resources is provisioning, the API
 // queues a deployment and answers 202 with a queued deployment (qdepl-...).
 // The provider stored that id, GET /deployments/qdepl-... is a 404, so the
 // deployment dropped out of state and the next apply deployed again.

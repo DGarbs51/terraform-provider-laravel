@@ -538,13 +538,12 @@ func mapCacheToState(c *client.CacheData, state *CacheResourceModel) {
 }
 
 // cacheBusy bounds how long Create waits for a new cache to become
-// available, and Update for a busy one. The interval is a
-// variable so the plan tests, which run against an in-memory fake, need not
-// wait.
+// available, and Update for a busy one. The interval is a variable so the
+// plan tests need not wait.
 const cacheBusyAttempts = 30
 
 // elastiCacheCreateAttempts bounds Create's wait for a new ElastiCache cache,
-// 30 minutes at cacheBusyInterval. One in GTM took 11 minutes.
+// 30 minutes at cacheBusyInterval.
 const elastiCacheCreateAttempts = 180
 
 var cacheBusyInterval = 10 * time.Second

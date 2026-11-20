@@ -51,7 +51,7 @@ resource "laravel_cloud_application" "test" {
 
 // TestAccApplicationResource_slugAndRootDirectory sets configured slugs on an
 // application and an environment, on create and on update, then changes the
-// repository to one without the configured root_directory (SE-605). Laravel
+// repository to one without the configured root_directory. Laravel
 // Cloud clears it; the apply must say so rather than leave a plan that
 // replaces the application and deletes its environments.
 func TestAccApplicationResource_slugAndRootDirectory(t *testing.T) {
@@ -114,7 +114,7 @@ resource "laravel_cloud_environment" "test" {
 }
 
 // TestAccApplicationResource_appEnvFields covers the application and
-// environment fields from SE-606: a static site created with serving and
+// environment fields: a static site created with serving and
 // build_command, the read-only details, slack_channel turned off by removing
 // it, a different default environment, and post_deploy_command, which the
 // test organization does not have and Laravel Cloud silently ignores.

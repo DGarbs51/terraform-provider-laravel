@@ -10,7 +10,7 @@ import (
 	"github.com/laravel/terraform-provider-laravel/internal/client"
 )
 
-// SE-587: a database created in the same apply as its cluster, and a cluster
+// A database created in the same apply as its cluster, and a cluster
 // destroyed right after its databases.
 //
 // The API refuses both while the cluster is busy -- still being created, or

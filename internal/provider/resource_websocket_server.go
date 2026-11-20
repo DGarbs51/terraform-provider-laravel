@@ -251,7 +251,7 @@ func mapWebsocketServerToState(ws *client.WebsocketServerData, state *WebsocketS
 // application on it, changing or deleting the server itself -- is refused while
 // the server is creating or updating. Each of those takes a few seconds, so
 // these allow for a long queue of them. The interval is a variable so the plan
-// tests, which run against an in-memory fake, need not wait.
+// tests need not wait.
 const websocketBusyAttempts = 60
 
 var websocketBusyInterval = 5 * time.Second

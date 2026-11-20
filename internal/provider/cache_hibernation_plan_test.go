@@ -28,7 +28,7 @@ resource "laravel_cloud_cache" "cache" {
 }
 
 // TestCacheHibernationPlan is the fast counterpart of
-// TestAccCacheResource_hibernation for SE-610: scale to zero is set on
+// TestAccCacheResource_hibernation: scale to zero is set on
 // create, changed and turned off in place, and eviction_policy is read back.
 // The fake refuses an update while the previous one is still in progress, and
 // an update that turns scale to zero on without its timeout, as the live API

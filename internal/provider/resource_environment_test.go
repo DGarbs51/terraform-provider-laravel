@@ -58,7 +58,7 @@ func TestAccEnvironmentResource_basic(t *testing.T) {
 const defaultBranchMainRepository = "laravel-gtm/terraform-sandbox-app"
 
 // TestAccEnvironmentResource_adoptDefault takes over the environment Laravel
-// Cloud creates with the application and then destroys it (SE-615). The API
+// Cloud creates with the application and then destroys it. The API
 // refuses to delete an application's default environment, so destroy must
 // leave it to the application's own deletion.
 func TestAccEnvironmentResource_adoptDefault(t *testing.T) {
@@ -136,7 +136,7 @@ func TestAccEnvironmentResource_update(t *testing.T) {
 }
 
 // TestAccEnvironmentResource_vanityDomain sets a vanity domain on a real
-// environment (SE-602). The API takes a single label and reports the full
+// environment. The API takes a single label and reports the full
 // hostname, so a configured label must still plan empty after apply. It sets
 // the domain only once: the API allows one change per environment every
 // 30 minutes.
@@ -169,7 +169,7 @@ func TestAccEnvironmentResource_vanityDomain(t *testing.T) {
 }
 
 // TestAccEnvironmentResource_readBack covers color, timeout and
-// shutdown_timeout, which the API reports (SE-603). An unset shutdown_timeout
+// shutdown_timeout, which the API reports. An unset shutdown_timeout
 // takes the API's value, and a change made outside Terraform shows in the next
 // plan and is put back. It also reads the deploy hook URL.
 func TestAccEnvironmentResource_readBack(t *testing.T) {
@@ -225,8 +225,8 @@ func TestAccEnvironmentResource_readBack(t *testing.T) {
 }
 
 // TestAccEnvironmentResource_hibernationRefused moves the app instance to a
-// Pro size, which cannot hibernate, under an environment with sleep_timeout
-// (SE-603). The API answers a sleep_timeout update with 200 but turns
+// Pro size, which cannot hibernate, under an environment with sleep_timeout.
+// The API answers a sleep_timeout update with 200 but turns
 // hibernation off, so the plan must show sleep_timeout again and applying it
 // must fail; removing it must converge.
 func TestAccEnvironmentResource_hibernationRefused(t *testing.T) {
@@ -323,7 +323,7 @@ func testAccMoveAppInstanceToPro(t *testing.T, envID string) {
 }
 
 // TestAccEnvironmentResource_attachmentReadBack covers an attached cache
-// detached outside Terraform (SE-603). The API reports the attachment as an
+// detached outside Terraform. The API reports the attachment as an
 // included relationship, so the next plan must put it back.
 func TestAccEnvironmentResource_attachmentReadBack(t *testing.T) {
 	appName := testAccName()
@@ -365,7 +365,7 @@ func TestAccEnvironmentResource_attachmentReadBack(t *testing.T) {
 	})
 }
 
-// TestAccEnvironmentResource_cacheSameApply covers SE-619: a cache created in
+// TestAccEnvironmentResource_cacheSameApply: a cache created in
 // the same apply as the environment that attaches it. The API refuses to attach
 // a cache that is still provisioning, which a new one was when its Create
 // returned, and the environment only warned and kept cache_id in state.

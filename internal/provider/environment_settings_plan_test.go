@@ -340,7 +340,7 @@ resource "laravel_cloud_websocket_application" "wsapp" {
 }
 
 // TestEnvironmentCacheSameApplyPlan is the fast counterpart of
-// TestAccEnvironmentResource_cacheSameApply (SE-619). The fake refuses to
+// TestAccEnvironmentResource_cacheSameApply. The fake refuses to
 // attach a cache that is creating or updating, as the API does: a cache
 // created in the same apply as its environment must be waited for, and one
 // resized in the same apply as it is attached must be retried.
@@ -444,7 +444,7 @@ func TestEnvironmentServingRootPlan(t *testing.T) {
 }
 
 // TestEnvironmentHibernationRefusedPlan covers sleep_timeout on an app
-// instance size that cannot hibernate (SE-603). The API answers the update
+// instance size that cannot hibernate. The API answers the update
 // with 200 but turns hibernation and the periodic wake-up off, so the apply
 // must fail rather than record settings the environment does not have.
 // Hibernation turned off outside Terraform must also show in the plan, even
@@ -497,7 +497,7 @@ func TestEnvironmentHibernationRefusedPlan(t *testing.T) {
 	})
 }
 
-// TestEnvironmentDeployHookURLPlan covers deploy_hook_url (SE-603), which the
+// TestEnvironmentDeployHookURLPlan covers deploy_hook_url, which the
 // API reports while the deploy hook is on. It must follow uses_deploy_hook
 // and, null or not, plan empty when nothing changes.
 func TestEnvironmentDeployHookURLPlan(t *testing.T) {

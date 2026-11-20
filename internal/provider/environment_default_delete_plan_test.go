@@ -9,7 +9,7 @@ import (
 )
 
 // TestEnvironmentDefaultDeletePlan pins destroying an environment that took
-// over its application's default environment (SE-615). The API refuses to
+// over its application's default environment. The API refuses to
 // delete the default environment with a 422, so destroy failed and left it in
 // state. It must now be dropped from state and left for the application's
 // deletion, while any other environment is still deleted.

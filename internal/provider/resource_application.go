@@ -366,7 +366,7 @@ func (r *ApplicationResource) Read(ctx context.Context, req resource.ReadRequest
 
 	// Read keeps the configured repository string, which may differ from the
 	// reported one in form, but records a lost one: Laravel Cloud can leave an
-	// application with no repository (SE-622), and the next apply sets it again.
+	// application with no repository, and the next apply sets it again.
 	rememberAppRepository(state.ID.ValueString(), state.Repository)
 	if app.Attributes.Repository == nil {
 		state.Repository = types.StringNull()

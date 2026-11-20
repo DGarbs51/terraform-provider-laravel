@@ -90,7 +90,7 @@ func (r *InstanceResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"name": schema.StringAttribute{
 				Required:    true,
 				Description: "Instance name (3-40 characters). Changing a managed queue's name replaces the queue.",
-				// SE-599: the API renames a managed queue's instance but not its
+				// The API renames a managed queue's instance but not its
 				// SQS queue, so the app and worker end up on a queue that doesn't
 				// exist. A new queue under the new name is the only safe rename.
 				PlanModifiers: []planmodifier.String{
@@ -568,7 +568,6 @@ func (r *InstanceResource) Update(ctx context.Context, req resource.UpdateReques
 			return
 		}
 	}
-	// Pausing and resuming are their own calls too.
 	if isSet(plan.Paused) && !plan.Paused.Equal(state.Paused) {
 		action := r.client.ResumeInstance
 		if plan.Paused.ValueBool() {
@@ -890,7 +889,6 @@ func (r *InstanceResource) ValidateConfig(ctx context.Context, req resource.Vali
 // converge there, and it answers a timeout outside 1-60 minutes with "The
 // hibernation timeout must be null or an integer between 1 and 60."
 func validateAppInstanceConfig(config InstanceResourceModel, diags *diag.Diagnostics) {
-	// type defaults to service when unset.
 	instanceType := config.Type.ValueString()
 	if config.Type.IsNull() {
 		instanceType = "service"

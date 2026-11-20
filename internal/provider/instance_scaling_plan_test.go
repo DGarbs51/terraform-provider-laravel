@@ -45,7 +45,7 @@ func TestInstanceAutoScalingRejectsReplicasPlan(t *testing.T) {
 // TestInstanceAutoScalingAppliesPlan is an auto-scaled instance with no replica
 // counts in config. The API reports 1 up to the plan's replica limit, which the
 // provider used to plan as null, so every create failed with "inconsistent
-// result after apply" (SE-595). It must plan, apply, and then re-plan empty.
+// result after apply". It must plan, apply, and then re-plan empty.
 func TestInstanceAutoScalingAppliesPlan(t *testing.T) {
 	_, baseURL := newFakeCloud(t)
 	config := instanceScalingConfig(baseURL, `scaling_type = "auto"`)
@@ -148,7 +148,7 @@ func TestInstanceSwitchToAutoScalingPlan(t *testing.T) {
 }
 
 // TestInstanceScalingThresholdsPlan covers changing and clearing the CPU and
-// memory thresholds (SE-595). Update never sent them, so a change failed with
+// memory thresholds. Update never sent them, so a change failed with
 // "inconsistent result after apply", and a removed threshold stayed set. When
 // scaling stops the API clears them, and setting one then is rejected.
 func TestInstanceScalingThresholdsPlan(t *testing.T) {

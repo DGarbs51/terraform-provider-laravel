@@ -11,7 +11,7 @@ import (
 	"github.com/laravel/terraform-provider-laravel/internal/client"
 )
 
-// SE-607: renaming a bucket's initial key must rename the key in place, not
+// Renaming a bucket's initial key must rename the key in place, not
 // replace the bucket and destroy everything stored in it.
 //
 // The plan check runs before apply, so on a provider with the bug the test

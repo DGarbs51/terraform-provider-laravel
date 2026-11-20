@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
-// TestDatabaseUserPlan covers SE-593's laravel_cloud_database_user against
+// TestDatabaseUserPlan covers laravel_cloud_database_user against
 // the fake API: a user created in the same apply as its cluster (refused while
 // the cluster is busy), the password kept although only the create response
 // has it, type and databases changed in place, drift when a granted database

@@ -11,7 +11,7 @@ import (
 )
 
 // TestDatabaseClusterBusyPlan is the fast counterpart of
-// TestAccDatabase_createWithCluster for SE-587: a database created in the same
+// TestAccDatabase_createWithCluster: a database created in the same
 // apply as its cluster, and the cluster destroyed right after its databases.
 // The fake refuses both while the cluster is busy, with the API's real 422
 // messages, so a provider that does not recognise them fails here.
@@ -32,7 +32,7 @@ resource "laravel_cloud_database" "db" {
 	})
 }
 
-// TestDatabaseRestoreForceDestroyPlan covers SE-588: a restored cluster holds
+// TestDatabaseRestoreForceDestroyPlan: a restored cluster holds
 // copies of the source's databases, so it can only be destroyed by deleting
 // them, which force_destroy opts in to. Without it the destroy fails and names
 // them; setting it later changes the restore in place.

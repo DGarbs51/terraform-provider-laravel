@@ -10,7 +10,7 @@ import (
 	"github.com/laravel/terraform-provider-laravel/internal/client"
 )
 
-// SE-606: removing slack_channel from the configuration turns Slack
+// Removing slack_channel from the configuration turns Slack
 // notifications off. It used to be Optional+Computed, so the old channel stayed
 // in state and nothing was sent.
 func TestApplicationSlackChannelClearedPlan(t *testing.T) {

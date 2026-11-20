@@ -121,7 +121,7 @@ resource "laravel_cloud_instance" "web" {
 	})
 }
 
-// TestInstanceAdoptAppPlan covers SE-621: type = "app" takes over the app
+// TestInstanceAdoptAppPlan: type = "app" takes over the app
 // instance Laravel Cloud creates with the environment, which the API refuses
 // to create, applies the configured settings to it, and leaves it to the
 // environment on destroy, as the API refuses to delete it.

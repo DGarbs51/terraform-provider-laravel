@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
-// TestEnvironmentRunningPlan covers SE-601. running stops and starts an
+// TestEnvironmentRunningPlan: running stops and starts an
 // environment in place. A started environment reports itself running only
 // once the deployment that starts it succeeds, so the apply must wait for
 // that, or the next plan would try to start it again.

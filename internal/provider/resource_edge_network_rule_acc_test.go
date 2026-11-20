@@ -78,8 +78,7 @@ resource "laravel_cloud_edge_network_rule" "c" {
 }
 
 // TestAccEdgeNetworkRule_basic creates rules on a dedicated edge network,
-// places one before another, changes and moves one in place, and imports it
-// (SE-611).
+// places one before another, changes and moves one in place, and imports it.
 func TestAccEdgeNetworkRule_basic(t *testing.T) {
 	edgeNetworkID := testAccDedicatedEdgeNetwork(t)
 	name := testAccName()

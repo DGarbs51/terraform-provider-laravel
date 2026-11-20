@@ -10,7 +10,7 @@ import (
 )
 
 // TestStorageBucketKeyChangePlan is the fast counterpart of
-// TestAccStorageBucket_renameKeyKeepsBucket (SE-607): changing the initial
+// TestAccStorageBucket_renameKeyKeepsBucket: changing the initial
 // key's name or permission updates the bucket in place and changes its key,
 // instead of replacing the bucket and destroying its contents.
 func TestStorageBucketKeyChangePlan(t *testing.T) {

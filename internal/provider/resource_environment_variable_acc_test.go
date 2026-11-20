@@ -14,7 +14,7 @@ import (
 
 // TestAccEnvironmentVariables_emptyMap checks that variables = {} applies.
 // The API refuses to store an empty list (it takes 1 to 210 variables), so
-// the provider must not send one (SE-604).
+// the provider must not send one.
 func TestAccEnvironmentVariables_emptyMap(t *testing.T) {
 	name := testAccName()
 	addr := "laravel_cloud_environment_variables.test"
@@ -46,7 +46,7 @@ func TestAccEnvironmentVariables_emptyMap(t *testing.T) {
 // TestAccEnvironmentVariables_destroyAfterExternalRemoval checks that destroy
 // still works when a managed variable was deleted outside Terraform and the
 // destroy does not refresh first. The API's delete is atomic and refuses the
-// whole request with a 422 when any key is missing (SE-604). The test
+// whole request with a 422 when any key is missing. The test
 // framework destroys with -refresh=false, so the final destroy is the check.
 func TestAccEnvironmentVariables_destroyAfterExternalRemoval(t *testing.T) {
 	name := testAccName()
@@ -78,8 +78,8 @@ func TestAccEnvironmentVariables_destroyAfterExternalRemoval(t *testing.T) {
 }
 
 // TestAccEnvironmentVariables_limit checks that more than 210 variables, the
-// most an environment holds, fail at plan time instead of with a 422 on apply
-// (SE-620). It first stores a large set in one request to show sizes below
+// most an environment holds, fail at plan time instead of with a 422 on apply.
+// It first stores a large set in one request to show sizes below
 // the limit still apply. Not 210: a new environment already holds APP_KEY,
 // which Cloud sets, and that counts toward the limit.
 func TestAccEnvironmentVariables_limit(t *testing.T) {

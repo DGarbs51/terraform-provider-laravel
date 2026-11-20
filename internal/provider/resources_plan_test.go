@@ -304,7 +304,7 @@ resource "laravel_cloud_background_process" "bgp" {
 	)
 }
 
-// SE-597: the API generates a worker's command from its config and rewrites
+// The API generates a worker's command from its config and rewrites
 // the stored config, and type changes in place.
 func TestBackgroundProcessWorkerLifecyclePlan(t *testing.T) {
 	f, baseURL := newFakeCloud(t)

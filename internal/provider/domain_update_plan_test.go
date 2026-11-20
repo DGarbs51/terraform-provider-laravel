@@ -220,7 +220,7 @@ func TestDomainStateUpgradeV0(t *testing.T) {
 	}
 }
 
-// TestDomainWaitForVerificationPlan covers SE-601. With
+// TestDomainWaitForVerificationPlan: with
 // wait_for_verification the apply asks Cloud to check the domain's records
 // until it verifies, and records the verified statuses; turning it on for an
 // existing domain waits on that apply. A domain that does not verify in time

@@ -10,7 +10,7 @@ import (
 )
 
 // TestAccProvider_pacedReads checks against the live API that
-// max_requests_per_minute spaces requests out (SE-617). It reads the
+// max_requests_per_minute spaces requests out. It reads the
 // organization 15 times at 30 requests a minute: after a burst of 3, the
 // other 12 wait 2 seconds each, so the plan alone takes at least 24 seconds.
 //

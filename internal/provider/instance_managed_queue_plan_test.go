@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
-// TestInstanceManagedQueuePlan covers SE-594. A managed queue must send the
+// TestInstanceManagedQueuePlan: a managed queue must send the
 // worker entry the API requires, so both generations can be created: a
 // current-generation queue with no min_replicas, and a previous-generation
 // queue, which needs polling_interval and can change it in place.
@@ -49,7 +49,7 @@ func TestInstanceManagedQueuePlan(t *testing.T) {
 	})
 }
 
-// TestInstanceFifoQueuePlan covers SE-616. A FIFO queue's name comes back
+// TestInstanceFifoQueuePlan: a FIFO queue's name comes back
 // with the ".fifo" suffix the API adds, which must not show as a diff, and
 // fifo must survive an import, where only queue_type tells it apart.
 func TestInstanceFifoQueuePlan(t *testing.T) {
@@ -112,7 +112,7 @@ resource "laravel_cloud_instance" "standard" {
 	})
 }
 
-// TestInstanceRenamePlan covers SE-599. The API renames a managed queue's
+// TestInstanceRenamePlan: the API renames a managed queue's
 // instance but not its SQS queue, so renaming a queue must replace it, while
 // any other instance still renames in place.
 func TestInstanceRenamePlan(t *testing.T) {
@@ -212,7 +212,7 @@ resource "laravel_cloud_instance" "legacy" {
 `, pollingInterval)
 }
 
-// TestInstanceQueuePausedDefaultPlan covers SE-601. A queue created with
+// TestInstanceQueuePausedDefaultPlan: a queue created with
 // is_default = true or paused = true must get there in the same apply,
 // although the API refuses both while the new queue is still creating, and
 // paused must then pause and resume the queue in place.

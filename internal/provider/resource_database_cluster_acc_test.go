@@ -12,7 +12,7 @@ import (
 	"github.com/laravel/terraform-provider-laravel/internal/client"
 )
 
-// SE-589: with storage_autoscale_max_gb set, the platform grows storage on its
+// With storage_autoscale_max_gb set, the platform grows storage on its
 // own once the disk fills. storage in config is then a minimum, not a target:
 // the API refuses any value below the current storage, and any storage change
 // within six hours of the last one. Before the fix, the next plan proposed

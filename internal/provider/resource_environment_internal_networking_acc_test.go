@@ -65,7 +65,7 @@ resource "laravel_cloud_environment_internal_networking" "backend" {
 
 // TestAccEnvironmentInternalNetworking_basic turns internal networking on
 // for an environment on a dedicated cluster, narrows it to one other
-// environment in place, and imports it (SE-611).
+// environment in place, and imports it.
 func TestAccEnvironmentInternalNetworking_basic(t *testing.T) {
 	clusterID := testAccDedicatedAppCluster(t)
 	name := testAccName()

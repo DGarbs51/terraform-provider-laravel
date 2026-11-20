@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-// SE-601: wait_for_verification asks Cloud to check the domain's records once
+// wait_for_verification asks Cloud to check the domain's records once
 // a minute until it verifies. Nothing creates this domain's records, so it
 // cannot verify: the apply waits out verification_timeout, keeps the domain
 // with its pending statuses, and the next plan is empty.

@@ -889,8 +889,7 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 // ("The selected cache is still being provisioned. Try again in a few
 // seconds."), such as one created or resized earlier in the same apply. These
 // bound how long an environment update retries that. The interval is a
-// variable so the plan tests, which run against an in-memory fake, need not
-// wait.
+// variable so the plan tests need not wait.
 const environmentBusyAttempts = 30
 
 var environmentBusyInterval = 10 * time.Second

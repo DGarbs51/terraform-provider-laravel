@@ -12,7 +12,7 @@ import (
 	"github.com/laravel/terraform-provider-laravel/internal/client"
 )
 
-// SE-597: the API generates a worker's command from its config and rewrites
+// The API generates a worker's command from its config and rewrites
 // the config it stores, so a worker without a configured command failed every
 // apply with "inconsistent result after apply", config was never read back,
 // and changing type replaced the process although the API changes it in place.

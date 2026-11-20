@@ -215,7 +215,7 @@ resource "laravel_cloud_cache" "cache" {
 `, extra)
 }
 
-// TestCacheElastiCacheIsPublicPlan covers is_public for ElastiCache (SE-585):
+// TestCacheElastiCacheIsPublicPlan covers is_public for ElastiCache:
 // the API stores false whatever create sends and refuses to change it, so
 // leaving it out applies and re-plans cleanly, true is refused at plan time
 // instead of drifting, and types other than ElastiCache still require it.
@@ -293,8 +293,8 @@ func TestCacheClusterIDPlan(t *testing.T) {
 }
 
 // TestApplicationRootDirectoryClearedPlan covers Laravel Cloud clearing
-// root_directory when the repository changes to one without that directory
-// (SE-605). Unset in the configuration, the cleared value is read back; still
+// root_directory when the repository changes to one without that directory.
+// Unset in the configuration, the cleared value is read back; still
 // configured, the apply fails and the next plan refuses to replace the
 // application, which would delete its environments.
 func TestApplicationRootDirectoryClearedPlan(t *testing.T) {
@@ -360,7 +360,7 @@ func TestApplicationRootDirectoryClearedPlan(t *testing.T) {
 }
 
 // TestSlugPlan sends a configured slug for an application and an environment,
-// both on create, which takes none, and on update (SE-605).
+// both on create, which takes none, and on update.
 func TestSlugPlan(t *testing.T) {
 	f, baseURL := newFakeCloud(t)
 	config := func(app, env string) string {

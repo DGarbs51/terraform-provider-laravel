@@ -17,7 +17,7 @@ import (
 // TestEnvironmentWriteOnlyAttributesPlan guards the environment attributes the
 // API accepts on PATCH but never returns -- sleep_timeout and
 // uses_purge_edge_cache_on_deploy -- next to color, timeout and
-// shutdown_timeout, which it does return (SE-603).
+// shutdown_timeout, which it does return.
 //
 // Write-only attributes are the classic non-converging-diff trap. When the
 // provider decoded them as response fields they came back as the Go zero value
@@ -69,7 +69,7 @@ func TestEnvironmentWriteOnlyAttributesPlan(t *testing.T) {
 // TestEnvironmentWriteOnlyOmittedPlan covers the same attributes when they are
 // NOT set in config. They are Optional+Computed, so Terraform requires them to
 // be known after apply. color, timeout and shutdown_timeout take what the API
-// reports (SE-603: they used to stay null). The write-only ones have no value
+// reports (they used to stay null). The write-only ones have no value
 // to adopt and must resolve to null: a fabricated zero value would be re-sent on
 // every apply and would also read as a change away from the user's intent.
 func TestEnvironmentWriteOnlyOmittedPlan(t *testing.T) {
@@ -104,7 +104,7 @@ func TestEnvironmentWriteOnlyOmittedPlan(t *testing.T) {
 }
 
 // TestEnvironmentReadBackDriftPlan covers color, timeout and shutdown_timeout
-// changed outside Terraform (SE-603). The API reports them, so the next plan
+// changed outside Terraform. The API reports them, so the next plan
 // must put the configured values back.
 func TestEnvironmentReadBackDriftPlan(t *testing.T) {
 	f, baseURL := newFakeCloud(t)
@@ -209,8 +209,8 @@ resource "laravel_cloud_environment" "minimal" {
 // TestEnvironmentVanityDomainPlan covers the vanity domain, which the API
 // exposes as its own PUT /environments/{id}/vanity-domain route rather than a
 // field on the environment update body. The API takes a subdomain label and
-// reports the full hostname, so the label must plan empty after apply
-// (SE-602), and a full hostname is rejected before it reaches the API.
+// reports the full hostname, so the label must plan empty after apply,
+// and a full hostname is rejected before it reaches the API.
 func TestEnvironmentVanityDomainPlan(t *testing.T) {
 	_, baseURL := newFakeCloud(t)
 	config := environmentVanityConfig(baseURL, "my-app-staging")
@@ -431,7 +431,7 @@ func expectDatabaseUpdates(f *fakeCloud, want ...string) resource.TestCheckFunc 
 }
 
 // TestEnvironmentAttachmentDriftPlan covers the attached database and cache
-// changed outside Terraform (SE-603). The API reports them as included
+// changed outside Terraform. The API reports them as included
 // relationships, so a detach or a different attachment shows in the next plan
 // and is put back. An attachment the configuration never set is left alone.
 func TestEnvironmentAttachmentDriftPlan(t *testing.T) {

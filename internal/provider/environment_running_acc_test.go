@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-// SE-601: running stops and starts an environment. Starting deploys it, and
+// running stops and starts an environment. Starting deploys it, and
 // the environment reports itself running only once that deployment succeeds,
 // so the apply waits for it and the next plan is empty.
 func TestAccEnvironment_running(t *testing.T) {

@@ -111,7 +111,7 @@ type fakeCloud struct {
 
 	// loseRepositories is how many of the next created applications Laravel
 	// Cloud leaves with no repository, as it does when another application on
-	// the same repository is deleted while they are created (SE-622). The
+	// the same repository is deleted while they are created. The
 	// create response still reports the repository; later reads do not.
 	loseRepositories int
 	// unsyncedBranches is how many of the next environment creates are

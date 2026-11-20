@@ -10,7 +10,7 @@ import (
 	"github.com/laravel/terraform-provider-laravel/internal/client"
 )
 
-// SE-608: a WebSocket server and two applications on it, created in one apply
+// A WebSocket server and two applications on it, created in one apply
 // and destroyed in one apply.
 //
 // The API refuses to change a server while it is busy -- still being created,

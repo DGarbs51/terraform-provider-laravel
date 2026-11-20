@@ -12,7 +12,7 @@ import (
 	"github.com/laravel/terraform-provider-laravel/internal/client"
 )
 
-// SE-593: a database user, created in the same apply as its Laravel MySQL
+// A database user, created in the same apply as its Laravel MySQL
 // cluster (which refuses it while the cluster is still being created), then
 // changed in place, imported, and destroyed. A Laravel MySQL cluster with
 // create_default_database = false is available in about 30 seconds and

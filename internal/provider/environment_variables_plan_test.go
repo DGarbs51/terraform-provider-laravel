@@ -61,7 +61,7 @@ func TestEnvironmentVariablesRemovalPlan(t *testing.T) {
 }
 
 // TestEnvironmentVariablesLimitPlan checks that more variables than an
-// environment can hold fail at plan time (SE-620). Cloud stores at most 210
+// environment can hold fail at plan time. Cloud stores at most 210
 // per environment and takes at most 210 per request, so the plan used to look
 // fine and the apply failed with a 422.
 func TestEnvironmentVariablesLimitPlan(t *testing.T) {
@@ -234,7 +234,7 @@ func TestEnvironmentVariablesIgnoresUnmanagedPlan(t *testing.T) {
 }
 
 // TestEnvironmentVariablesHiddenPlan covers a token that can edit variables
-// but not view them (SE-604). The API then leaves environment_variables out of
+// but not view them. The API then leaves environment_variables out of
 // the environment response. Read took that as an empty list, so every
 // variable looked deleted and every apply rewrote them all. Read now keeps
 // state, so the second plan is empty.

@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-// TestAccDataSources_listsAndFilters reads the data sources added in SE-611
+// TestAccDataSources_listsAndFilters reads the data sources
 // against the live API, and the region/type/status and name/domain/status
 // filters on the dedicated cluster and edge network lists. The reusable
 // Resend keys need an environment, so the test creates an application with a

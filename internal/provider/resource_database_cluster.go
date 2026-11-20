@@ -737,7 +737,7 @@ func jsonEqual(a, b any) bool {
 // in it, deleting it, restoring it -- is refused while the cluster is busy, and
 // provisioning a cluster routinely takes twenty minutes or more. These bound
 // how long the provider waits for it. The interval is a variable so the plan
-// tests, which run against an in-memory fake, need not wait.
+// tests need not wait.
 const databaseBusyAttempts = 180
 
 var databaseBusyInterval = 10 * time.Second

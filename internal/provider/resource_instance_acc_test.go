@@ -13,7 +13,7 @@ import (
 	"github.com/laravel/terraform-provider-laravel/internal/client"
 )
 
-// SE-594: a managed queue must be creatable. The API requires one worker
+// A managed queue must be creatable. The API requires one worker
 // entry in background_processes, and the provider used to send none, so every
 // create failed with a 422 on background_processes.0.type and .processes.
 func TestAccInstance_managedQueue(t *testing.T) {
@@ -61,7 +61,7 @@ func TestAccInstance_managedQueue(t *testing.T) {
 	})
 }
 
-// SE-599: renaming a managed queue must replace it. The API renames the
+// Renaming a managed queue must replace it. The API renames the
 // instance in place but keeps its SQS queue and worker on the old name, so
 // the provider used to leave the app and worker pointed at the wrong queue.
 func TestAccInstance_managedQueueRename(t *testing.T) {
@@ -152,7 +152,7 @@ resource "laravel_cloud_instance" "queue" {
 `, name, testAccRepository(), testAccBranch(), maxReplicas, extra)
 }
 
-// SE-616: a FIFO managed queue must be creatable. The API appends ".fifo" to
+// A FIFO managed queue must be creatable. The API appends ".fifo" to
 // the queue's name, which must read back without it, so the queue converges,
 // and fifo must come back on import from queue_type.
 func TestAccInstance_fifoQueue(t *testing.T) {
@@ -193,7 +193,7 @@ func TestAccInstance_fifoQueue(t *testing.T) {
 	})
 }
 
-// SE-601: paused pauses and resumes a managed queue, and a queue created with
+// paused pauses and resumes a managed queue, and a queue created with
 // is_default = true takes the default over in the same apply, although the
 // API refuses both until the new queue is available.
 func TestAccInstance_pausedDefaultQueue(t *testing.T) {
@@ -267,7 +267,7 @@ resource "laravel_cloud_instance" "second" {
 	})
 }
 
-// SE-595: an automatically scaled instance must apply and converge, and its
+// An automatically scaled instance must apply and converge, and its
 // CPU and memory thresholds must be changeable and clearable. The API reports
 // replica counts for "auto" (1 up to the plan's limit), which the provider
 // used to plan as null, so every create failed with "inconsistent result
@@ -400,7 +400,7 @@ resource "laravel_cloud_instance" "worker" {
 `, name, testAccRepository(), testAccBranch(), scalingType, extra)
 }
 
-// SE-596: an environment's app instance, imported, reads back its Octane,
+// An environment's app instance, imported, reads back its Octane,
 // Inertia SSR and hibernation settings, takes hibernation_timeout in minutes,
 // and turns hibernation off with 0. The provider used to read none of them
 // back, documented the timeout in seconds, and never sent null, so
@@ -465,7 +465,7 @@ func TestAccInstance_appSettings(t *testing.T) {
 	})
 }
 
-// SE-621: type = "app" takes over the app instance Laravel Cloud creates with
+// type = "app" takes over the app instance Laravel Cloud creates with
 // the environment, with no import. The create route refuses type "app" with
 // a 422, which is how this failed before. Destroy leaves the instance to the
 // environment, as the API refuses to delete it.

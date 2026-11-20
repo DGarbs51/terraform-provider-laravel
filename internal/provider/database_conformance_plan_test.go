@@ -271,7 +271,7 @@ resource "laravel_cloud_database_cluster" "db" {
 `, baseURL)
 }
 
-// TestDatabaseClusterStorageAutoscalePlan covers SE-589. With
+// TestDatabaseClusterStorageAutoscalePlan: with
 // storage_autoscale_max_gb set, the platform grows storage by itself and the
 // API refuses to shrink it, so the configured storage is a minimum: the grown
 // value must plan no change, and an update to another key must not send the

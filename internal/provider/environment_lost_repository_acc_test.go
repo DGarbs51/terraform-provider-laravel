@@ -18,7 +18,7 @@ const lostRepositoryTestRepository = "laravel-gtm/playground"
 
 // TestAccEnvironmentResource_lostRepository creates an application and an
 // environment on it while the only other application on the same repository is
-// deleted (SE-622). Laravel Cloud then deletes its record of the repository,
+// deleted. Laravel Cloud then deletes its record of the repository,
 // leaves the new application with no repository, and refuses every environment
 // on it with a 422 "The selected branch is no longer available." until the
 // repository is set again.

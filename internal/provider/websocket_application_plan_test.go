@@ -124,7 +124,7 @@ func TestWebsocketApplicationClearOriginsPlan(t *testing.T) {
 }
 
 // TestWebsocketServerBusyPlan is the fast counterpart of
-// TestAccWebsocketApplication_createWithServer for SE-608: two applications
+// TestAccWebsocketApplication_createWithServer: two applications
 // created in the same apply as their server, then everything destroyed. The
 // fake refuses each change while the server is creating or updating, with the
 // API's real 422 messages, so a provider that neither waits nor retries fails

@@ -12,7 +12,7 @@ import (
 
 // Laravel Cloud refuses to create an environment on a branch missing from its
 // own copy of the repository's branch list, with a 422 "The selected branch is
-// no longer available." (SE-622). That copy is filled by a queued job, so a
+// no longer available." That copy is filled by a queued job, so a
 // non-default branch of a newly connected repository is missing for a short
 // while. The provider retries for up to two minutes.
 const branchUnavailableAttempts = 24
