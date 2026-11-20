@@ -130,6 +130,10 @@ func (p *LaravelCloudProvider) Configure(ctx context.Context, req provider.Confi
 	if baseURL != "" {
 		opts = append(opts, client.WithBaseURL(baseURL))
 	}
+	// An opt-in record of every API call, for testing the provider by hand.
+	if path := os.Getenv("LARAVEL_CLOUD_HTTP_LOG"); path != "" {
+		opts = append(opts, client.WithRequestLog(path))
+	}
 
 	c := client.NewClient(token, opts...)
 	resp.DataSourceData = c

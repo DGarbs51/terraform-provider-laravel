@@ -24,6 +24,8 @@ type Client struct {
 	baseURL    string
 	token      string
 	httpClient *http.Client
+	// requestLog, when set, is a file every API call is appended to.
+	requestLog string
 }
 
 // NewClient creates a new Laravel Cloud API client.
@@ -67,14 +69,20 @@ func WithHTTPClient(h *http.Client) ClientOption {
 // Low-level HTTP helpers
 // ---------------------------------------------------------------------
 
-func (c *Client) do(ctx context.Context, method, path string, body any, out any) error {
+func (c *Client) do(ctx context.Context, method, path string, body any, out any) (err error) {
+	start := time.Now()
+	var u string
+	var reqBytes, respBody []byte
+	status := 0
+	defer func() { c.logRequest(start, method, u, status, reqBytes, respBody, err) }()
+
 	// Split any query string off before joining: url.JoinPath treats the whole
 	// argument as path segments and would escape "?" to "%3F".
 	reqPath, rawQuery := path, ""
 	if i := strings.IndexByte(path, '?'); i >= 0 {
 		reqPath, rawQuery = path[:i], path[i+1:]
 	}
-	u, err := url.JoinPath(c.baseURL, reqPath)
+	u, err = url.JoinPath(c.baseURL, reqPath)
 	if err != nil {
 		return fmt.Errorf("building URL: %w", err)
 	}
@@ -84,11 +92,11 @@ func (c *Client) do(ctx context.Context, method, path string, body any, out any)
 
 	var reqBody io.Reader
 	if body != nil {
-		b, err := json.Marshal(body)
+		reqBytes, err = json.Marshal(body)
 		if err != nil {
 			return fmt.Errorf("marshaling request body: %w", err)
 		}
-		reqBody = bytes.NewReader(b)
+		reqBody = bytes.NewReader(reqBytes)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, u, reqBody)
@@ -106,10 +114,11 @@ func (c *Client) do(ctx context.Context, method, path string, body any, out any)
 		return fmt.Errorf("executing request: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
+	status = resp.StatusCode
 
 	// Read one byte past the cap so a truncated body is reported as such
 	// rather than as the JSON syntax error truncation would otherwise cause.
-	respBody, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseSize+1))
+	respBody, err = io.ReadAll(io.LimitReader(resp.Body, maxResponseSize+1))
 	if err != nil {
 		return fmt.Errorf("reading response body: %w", err)
 	}
