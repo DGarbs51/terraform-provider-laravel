@@ -75,7 +75,8 @@ go test ./internal/provider -v -sweep=all
 ```
 
 They delete applications (and with them their environments), WebSocket
-servers, caches, buckets (keys first), database clusters (databases first) and
+servers, caches, buckets (keys first), database users (in any cluster, by
+username prefix `tfacc_`), database clusters (databases first) and
 secrets.
 
 By default a sweep keeps anything created in the last two hours, because other
