@@ -62,6 +62,74 @@ Enable Terraform debug logging:
 TF_LOG=DEBUG make testacc
 ```
 
+### Cleaning Up (Sweepers)
+
+Every acceptance test names its resources with the `tfacc-` prefix (use
+`testAccName()`). The sweepers delete only resources with that prefix, so they
+are safe to run against an organization that also holds real resources:
+
+```sh
+go test ./internal/provider -v -sweep=all
+```
+
+They delete applications (and with them their environments), WebSocket
+servers, caches, buckets (keys first), database clusters (databases first) and
+secrets.
+
+By default a sweep keeps anything created in the last two hours, because other
+test runs may be using the same organization at the same time. Set
+`LARAVEL_CLOUD_SWEEP_MIN_AGE` to change that, as a Go duration such as `30m`,
+or `0` to delete every `tfacc-` resource once you know nothing else is testing.
+
+## Live Testing with Real Terraform
+
+Acceptance tests drive Terraform from Go. To run real `terraform plan` and
+`apply` by hand against a dev build, and see every API call it makes, use the
+scenarios in
+[laravel-gtm/terraform-provider-sandbox](https://github.com/laravel-gtm/terraform-provider-sandbox).
+Its README has the full workflow; in short:
+
+1. Build the provider: `go build -o bin/terraform-provider-laravel .`
+2. Point Terraform at the build with `dev_overrides` in `~/.terraformrc`
+   (template in the sandbox repo). Terraform prints "Provider development
+   overrides are in effect" when it is used, and no `terraform init` is needed.
+3. Run a scenario: `bin/run-scenario scenarios/<name>`. It applies each step,
+   checks that a second plan is empty, destroys everything, and saves the
+   Terraform output and API calls to `runs/<scenario>/<timestamp>/`.
+
+Scenarios that deploy use
+[laravel-gtm/terraform-sandbox-app](https://github.com/laravel-gtm/terraform-sandbox-app),
+a plain Laravel skeleton.
+
+### API Request Log
+
+Set `LARAVEL_CLOUD_HTTP_LOG` to a file path and the provider appends one JSON
+line per API call: time, method, URL, status, duration, and the request and
+response bodies. The token is never written, and passwords, secrets, tokens,
+variable and secret values, and deploy hook URLs are redacted.
+
+```sh
+export LARAVEL_CLOUD_HTTP_LOG=/tmp/api.jsonl
+terraform apply
+jq -r 'select(.method != "GET") | "\(.method) \(.url) -> \(.status)"' /tmp/api.jsonl
+```
+
+### Fixing a Bug
+
+1. Reproduce it with real Terraform, ideally as a sandbox scenario, and keep
+   the plan output and API log from a released build.
+2. Write an acceptance test that fails on the current code.
+3. Fix it, then update the fake API in `mock_*_test.go` to behave like the
+   live API did, and add a plan test so the bug is caught on every PR.
+4. Run the scenario again with the fix and keep the after evidence.
+
+### CI
+
+The Acceptance Tests job runs on pushes to `main`, same-repository pull
+requests and manually started runs. It needs the `LARAVEL_CLOUD_API_TOKEN`
+repository secret; without it every acceptance test skips and the job still
+passes, so check the job log for `--- PASS: TestAcc` rather than the job status.
+
 ## Plan-Check Tests (fake API)
 
 Plan-check tests run a **real** `terraform plan`/`apply` cycle against an
@@ -107,6 +175,6 @@ Tests follow the standard Terraform provider testing patterns using `terraform-p
 
 1. Use `testAccPreCheck(t)` in every test's `PreCheck` to validate the API token
 2. Use `testAccProtoV6ProviderFactories` as the provider factory
-3. Generate unique resource names with `acctest.RandString()`
+3. Name resources with `testAccName()`, which adds the `tfacc-` prefix the sweepers rely on
 4. Include both create and import test steps
 5. Test updates in a separate test function with multiple steps
