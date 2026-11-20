@@ -222,6 +222,7 @@ func (p *LaravelCloudProvider) Resources(_ context.Context) []func() resource.Re
 		NewSecretResource,
 		NewEnvironmentSecretResource,
 		NewEnvironmentResendResource,
+		NewEdgeNetworkRuleResource,
 	}
 }
 
