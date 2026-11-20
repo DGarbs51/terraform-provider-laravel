@@ -297,10 +297,16 @@ jobs:
     # Acceptance tests create real resources in one shared Cloud account, so
     # overlapping runs collide on names and quota. Queue them instead.
     # cancel-in-progress is deliberately false: cancelling mid-apply would
-    # orphan real infrastructure rather than destroying it.
+    # orphan real infrastructure rather than destroying it. queue: max lets up
+    # to 100 jobs wait their turn; the default keeps one waiting job, so each
+    # new PR or main push cancelled whichever acceptance job was waiting.
+    # The group was renamed along with queue: max: in the old group, jobs from
+    # runs still on the single-slot setting cancelled a *running* queue: max
+    # job. Never share this group with jobs that do not set queue: max.
     concurrency:
-      group: acceptance-${{ github.repository }}
+      group: acceptance-queue-${{ github.repository }}
       cancel-in-progress: false
+      queue: max
     env:
       TF_ACC: "1"
       LARAVEL_CLOUD_API_TOKEN: ${{ secrets.LARAVEL_CLOUD_API_TOKEN }}
