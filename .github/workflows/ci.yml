@@ -170,7 +170,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     needs: [build, test, vet]
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     # Acceptance tests create real resources in one shared Cloud account, so
     # overlapping runs collide on names and quota. Queue them instead.
     # cancel-in-progress is deliberately false: cancelling mid-apply would
