@@ -5,6 +5,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Lets CI be started by hand, e.g. after Actions is turned on for a fork.
+  workflow_dispatch:
 
 permissions:
   contents: read
