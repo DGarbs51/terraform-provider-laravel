@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -47,16 +49,63 @@ func isTestName(name string) bool {
 	return strings.HasPrefix(strings.ToLower(name), testAccPrefix)
 }
 
-// sweepEach deletes every item whose name has the test prefix and reports
-// all failures together, so one stuck resource does not hide the others.
-func sweepEach[T any](items []T, name func(T) string, del func(T) error) error {
+// testAccSweepMinAge is how old a test resource must be before a sweep
+// deletes it. Several threads or CI runs can test against the same
+// organization at once, and a sweep must not delete resources a running test
+// still uses; the longest acceptance test finishes well within this.
+// Override with LARAVEL_CLOUD_SWEEP_MIN_AGE (a Go duration such as "30m"),
+// or "0" to sweep everything once nothing else is testing.
+const defaultSweepMinAge = 2 * time.Hour
+
+func testAccSweepMinAge() (time.Duration, error) {
+	v := os.Getenv("LARAVEL_CLOUD_SWEEP_MIN_AGE")
+	if v == "" {
+		return defaultSweepMinAge, nil
+	}
+	if v == "0" {
+		return 0, nil
+	}
+	d, err := time.ParseDuration(v)
+	if err != nil {
+		return 0, fmt.Errorf("LARAVEL_CLOUD_SWEEP_MIN_AGE: %w", err)
+	}
+	return d, nil
+}
+
+// sweepEach deletes every item whose name has the test prefix and that is at
+// least the minimum sweep age, and reports all failures together, so one stuck
+// resource does not hide the others. An item whose age cannot be read is kept:
+// deleting a resource another test is using is worse than leaving one behind.
+func sweepEach[T any](items []T, name func(T) string, createdAt func(T) *string, del func(T) error) error {
+	minAge, err := testAccSweepMinAge()
+	if err != nil {
+		return err
+	}
 	var errs []string
 	for _, it := range items {
-		if !isTestName(name(it)) {
+		n := name(it)
+		if !isTestName(n) {
 			continue
 		}
+		if minAge > 0 {
+			ts := createdAt(it)
+			if ts == nil {
+				log.Printf("[INFO] sweep: keeping %s, it has no created_at", n)
+				continue
+			}
+			created, err := time.Parse(time.RFC3339, *ts)
+			if err != nil {
+				log.Printf("[INFO] sweep: keeping %s, created_at %q is unreadable", n, *ts)
+				continue
+			}
+			if age := time.Since(created); age < minAge {
+				log.Printf("[INFO] sweep: keeping %s, created %s ago (minimum age %s)", n, age.Round(time.Second), minAge)
+				continue
+			}
+		}
+		log.Printf("[INFO] sweep: deleting %s", n)
 		if err := del(it); err != nil && !client.IsNotFound(err) {
-			errs = append(errs, fmt.Sprintf("%s: %v", name(it), err))
+			errs = append(errs, fmt.Sprintf("%s: %v", n, err))
 		}
 	}
 	if len(errs) > 0 {
@@ -80,6 +129,7 @@ func init() {
 			}
 			return sweepEach(apps,
 				func(a client.ApplicationData) string { return a.Attributes.Name },
+				func(a client.ApplicationData) *string { return a.Attributes.CreatedAt },
 				func(a client.ApplicationData) error { return c.DeleteApplication(ctx, a.ID) })
 		},
 	})
@@ -95,6 +145,7 @@ func init() {
 			}
 			return sweepEach(servers,
 				func(s client.WebsocketServerData) string { return s.Attributes.Name },
+				func(s client.WebsocketServerData) *string { return s.Attributes.CreatedAt },
 				func(s client.WebsocketServerData) error { return c.DeleteWebsocketServer(ctx, s.ID) })
 		},
 	})
@@ -110,6 +161,7 @@ func init() {
 			}
 			return sweepEach(caches,
 				func(x client.CacheData) string { return x.Attributes.Name },
+				func(x client.CacheData) *string { return x.Attributes.CreatedAt },
 				func(x client.CacheData) error { return c.DeleteCache(ctx, x.ID) })
 		},
 	})
@@ -125,6 +177,7 @@ func init() {
 			}
 			return sweepEach(buckets,
 				func(b client.StorageBucketData) string { return b.Attributes.Name },
+				func(b client.StorageBucketData) *string { return b.Attributes.CreatedAt },
 				// The API refuses to delete a bucket that still has keys.
 				func(b client.StorageBucketData) error {
 					keys, err := c.ListStorageBucketKeys(ctx, b.ID)
@@ -155,6 +208,7 @@ func init() {
 			}
 			return sweepEach(clusters,
 				func(d client.DatabaseClusterData) string { return d.Attributes.Name },
+				func(d client.DatabaseClusterData) *string { return d.Attributes.CreatedAt },
 				func(d client.DatabaseClusterData) error {
 					dbs, err := c.ListDatabases(ctx, d.ID)
 					if err != nil {
@@ -185,6 +239,7 @@ func init() {
 				func(s client.SecretData) string {
 					return strings.ReplaceAll(strings.ToLower(s.Attributes.Key), "_", "-")
 				},
+				func(s client.SecretData) *string { return s.Attributes.CreatedAt },
 				func(s client.SecretData) error { return c.DeleteSecret(ctx, s.ID) })
 		},
 	})
