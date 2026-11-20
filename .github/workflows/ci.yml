@@ -5,15 +5,77 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Pushes to main skip CI when a PR already passed on the same tree (see
+  # already-passed below), so main no longer gets a live acceptance run per
+  # merge. This nightly run of everything is what catches drift in the live
+  # Cloud API between merges. 07:17 UTC is the small hours in New York.
+  schedule:
+    - cron: "17 7 * * *"
   # Lets CI be started by hand, e.g. after Actions is turned on for a fork.
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# Go build cache: only the go-cache job saves it (on pushes to main), after
+# compiling everything the other jobs compile; every other job only restores
+# it. When each job saved through setup-go's `cache: true`, the first job to
+# finish -- Format Check, which compiles nothing -- won the shared key with an
+# empty cache, and since that key only changed with go.sum, every job compiled
+# from scratch on every run.
+
 jobs:
+  # Merges are rebase merges of a PR that was rebased on main first, so the
+  # commit that lands on main usually has exactly the tree the PR run tested.
+  # Running the whole suite again on that tree repeats a pass, holds the shared
+  # live org for minutes and queues other PRs' acceptance runs behind it. When
+  # a PR run from this repository already passed every job, including
+  # acceptance, on the same tree, the rest of this run is skipped.
+  already-passed:
+    name: Already Passed On PR
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    outputs:
+      skip: ${{ steps.check.outputs.skip }}
+    steps:
+      - name: Look for a passing PR run on this tree
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          REPO_ID: ${{ github.repository_id }}
+          TREE: ${{ github.event.head_commit.tree_id }}
+        run: |
+          if [ -z "$TREE" ]; then
+            echo "No head commit tree; running everything."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Only markers from runs on this repository's own branches count: a
+          # fork PR runs the workflow file from its own head, so it could
+          # upload a marker for a tree it never tested (and fork PRs skip
+          # acceptance anyway). A failed lookup runs everything.
+          n=$(gh api "repos/$REPO/actions/artifacts?name=ci-passed-tree-$TREE&per_page=100" \
+                --jq "[.artifacts[] | select(.expired == false
+                        and .workflow_run.repository_id == $REPO_ID
+                        and .workflow_run.head_repository_id == $REPO_ID)] | length") || n=0
+          if [ "${n:-0}" -gt 0 ]; then
+            echo "Tree $TREE already passed CI on a PR; skipping the rest of this run."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No passing PR run on tree $TREE; running everything."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
     name: Build
+    needs: already-passed
+    # On pull requests already-passed is skipped and its output is empty, so
+    # this runs; !cancelled() lets it run despite that skipped dependency.
+    if: ${{ !cancelled() && needs.already-passed.outputs.skip != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -22,13 +84,23 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: "go.mod"
-          cache: true
+          cache: false
+
+      - uses: actions/cache/restore@v6
+        with:
+          path: ~/.cache/go-build
+          key: go-build-${{ runner.os }}-${{ hashFiles('go.mod', 'go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            go-build-${{ runner.os }}-${{ hashFiles('go.mod', 'go.sum') }}-
+            go-build-${{ runner.os }}-
 
       - name: Build
         run: go build -v ./...
 
   test:
     name: Unit Tests
+    needs: already-passed
+    if: ${{ !cancelled() && needs.already-passed.outputs.skip != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -37,13 +109,23 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: "go.mod"
-          cache: true
+          cache: false
+
+      - uses: actions/cache/restore@v6
+        with:
+          path: ~/.cache/go-build
+          key: go-build-${{ runner.os }}-${{ hashFiles('go.mod', 'go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            go-build-${{ runner.os }}-${{ hashFiles('go.mod', 'go.sum') }}-
+            go-build-${{ runner.os }}-
 
       - name: Run tests
         run: go test ./... -count=1 -parallel=4 -timeout 30s
 
   vet:
     name: Vet
+    needs: already-passed
+    if: ${{ !cancelled() && needs.already-passed.outputs.skip != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -52,13 +134,23 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: "go.mod"
-          cache: true
+          cache: false
+
+      - uses: actions/cache/restore@v6
+        with:
+          path: ~/.cache/go-build
+          key: go-build-${{ runner.os }}-${{ hashFiles('go.mod', 'go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            go-build-${{ runner.os }}-${{ hashFiles('go.mod', 'go.sum') }}-
+            go-build-${{ runner.os }}-
 
       - name: Run go vet
         run: go vet ./...
 
   fmt:
     name: Format Check
+    needs: already-passed
+    if: ${{ !cancelled() && needs.already-passed.outputs.skip != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -67,7 +159,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: "go.mod"
-          cache: true
+          cache: false
 
       - name: Check formatting
         run: |
@@ -80,6 +172,8 @@ jobs:
 
   lint:
     name: Lint
+    needs: already-passed
+    if: ${{ !cancelled() && needs.already-passed.outputs.skip != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -88,8 +182,9 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: "go.mod"
-          cache: true
+          cache: false
 
+      # The action keeps its own analysis cache.
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
@@ -100,6 +195,8 @@ jobs:
   # silently go stale -- so the drift is a build failure, not a review comment.
   docs:
     name: Docs Up To Date
+    needs: already-passed
+    if: ${{ !cancelled() && needs.already-passed.outputs.skip != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -108,7 +205,15 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: "go.mod"
-          cache: true
+          cache: false
+
+      - uses: actions/cache/restore@v6
+        with:
+          path: ~/.cache/go-build
+          key: go-build-${{ runner.os }}-${{ hashFiles('go.mod', 'go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            go-build-${{ runner.os }}-${{ hashFiles('go.mod', 'go.sum') }}-
+            go-build-${{ runner.os }}-
 
       - uses: hashicorp/setup-terraform@v4
         with:
@@ -141,6 +246,8 @@ jobs:
   # for -- the compatibility surface acceptance tests never exercise.
   plan:
     name: Plan Tests (TF ${{ matrix.terraform }})
+    needs: already-passed
+    if: ${{ !cancelled() && needs.already-passed.outputs.skip != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -153,7 +260,15 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: "go.mod"
-          cache: true
+          cache: false
+
+      - uses: actions/cache/restore@v6
+        with:
+          path: ~/.cache/go-build
+          key: go-build-${{ runner.os }}-${{ hashFiles('go.mod', 'go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            go-build-${{ runner.os }}-${{ hashFiles('go.mod', 'go.sum') }}-
+            go-build-${{ runner.os }}-
 
       - uses: hashicorp/setup-terraform@v4
         with:
@@ -169,8 +284,16 @@ jobs:
     name: Acceptance Tests
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    needs: [build, test, vet]
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: [already-passed, build, test, vet]
+    # Runs only once build, unit tests and vet passed (which also means the run
+    # was not skipped), and not for fork PRs, which get no secrets.
+    if: >-
+      ${{ !cancelled()
+      && needs.build.result == 'success'
+      && needs.test.result == 'success'
+      && needs.vet.result == 'success'
+      && (github.event_name != 'pull_request'
+          || github.event.pull_request.head.repo.full_name == github.repository) }}
     # Acceptance tests create real resources in one shared Cloud account, so
     # overlapping runs collide on names and quota. Queue them instead.
     # cancel-in-progress is deliberately false: cancelling mid-apply would
@@ -188,11 +311,94 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: "go.mod"
-          cache: true
+          cache: false
+
+      - uses: actions/cache/restore@v6
+        with:
+          path: ~/.cache/go-build
+          key: go-build-${{ runner.os }}-${{ hashFiles('go.mod', 'go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            go-build-${{ runner.os }}-${{ hashFiles('go.mod', 'go.sum') }}-
+            go-build-${{ runner.os }}-
 
       - uses: hashicorp/setup-terraform@v4
         with:
           terraform_wrapper: false
 
+      # Only the live TestAcc tests: with TF_ACC=1, ./... would also rerun the
+      # plan tests and unit tests, which their own jobs already cover, while
+      # this job holds the shared org.
       - name: Run acceptance tests
-        run: go test ./... -v -count=1 -parallel=4 -timeout 60m
+        run: go test ./... -v -count=1 -parallel=4 -run '^TestAcc' -timeout 60m
+
+  # Marks this PR run's tree as passed, for already-passed on the push to main
+  # that merging it produces. Requires every job to have actually run and
+  # passed: a skipped acceptance job (fork PR) records nothing.
+  passed:
+    name: Record Passing Tree
+    needs: [build, test, vet, fmt, lint, docs, plan, acceptance]
+    if: >-
+      ${{ !cancelled()
+      && github.event_name == 'pull_request'
+      && needs.build.result == 'success'
+      && needs.test.result == 'success'
+      && needs.vet.result == 'success'
+      && needs.fmt.result == 'success'
+      && needs.lint.result == 'success'
+      && needs.docs.result == 'success'
+      && needs.plan.result == 'success'
+      && needs.acceptance.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # The PR run tested the merge of the PR into main, which is what this
+      # checks out, so its tree is the one a rebase merge puts on main.
+      - uses: actions/checkout@v7
+
+      - name: Write marker
+        run: |
+          echo "TREE=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_ENV"
+          printf 'run %s\ncommit %s\n' "$GITHUB_RUN_ID" "$GITHUB_SHA" > ci-passed.txt
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ci-passed-tree-${{ env.TREE }}
+          path: ci-passed.txt
+          retention-days: 14
+
+  # Saves the Go build cache the other jobs restore. It runs on every push to
+  # main, even one that skips the rest, so PRs start from a cache of current
+  # main; caches saved on PR branches are not visible to other PRs.
+  go-cache:
+    name: Save Go Build Cache
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: "go.mod"
+          cache: false
+
+      - uses: actions/cache/restore@v6
+        with:
+          path: ~/.cache/go-build
+          key: go-build-${{ runner.os }}-${{ hashFiles('go.mod', 'go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            go-build-${{ runner.os }}-${{ hashFiles('go.mod', 'go.sum') }}-
+            go-build-${{ runner.os }}-
+
+      # What Build, Vet, Unit Tests, Plan Tests and Acceptance Tests compile;
+      # -run '^$' compiles every test package without running a test.
+      - name: Compile
+        run: |
+          go build ./...
+          go vet ./...
+          go test ./... -count=1 -run '^$'
+
+      - uses: actions/cache/save@v6
+        with:
+          path: ~/.cache/go-build
+          key: go-build-${{ runner.os }}-${{ hashFiles('go.mod', 'go.sum') }}-${{ github.sha }}

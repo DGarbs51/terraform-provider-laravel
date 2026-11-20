@@ -125,10 +125,17 @@ jq -r 'select(.method != "GET") | "\(.method) \(.url) -> \(.status)"' /tmp/api.j
 
 ### CI
 
-The Acceptance Tests job runs on pushes to `main`, same-repository pull
-requests and manually started runs. It needs the `LARAVEL_CLOUD_API_TOKEN`
-repository secret; without it every acceptance test skips and the job still
-passes, so check the job log for `--- PASS: TestAcc` rather than the job status.
+The Acceptance Tests job runs only the `TestAcc` tests, on pushes to `main`,
+same-repository pull requests, the nightly scheduled run and manually started
+runs. It needs the `LARAVEL_CLOUD_API_TOKEN` repository secret; without it
+every acceptance test skips and the job still passes, so check the job log for
+`--- PASS: TestAcc` rather than the job status.
+
+A push to `main` whose tree already passed every job, acceptance included, on
+a same-repository pull request skips the rest of its CI run (**Already Passed
+On PR** says so in its log). That is the usual case after rebasing a PR on
+`main` and rebase-merging it. The nightly run, and any run started by hand,
+always runs everything.
 
 ## Plan-Check Tests (fake API)
 
